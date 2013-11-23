@@ -155,16 +155,28 @@ class AcceptHeader
     private function sort()
     {
         if (!$this->sorted) {
-            uasort($this->items, function ($a, $b) {
-                $qA = $a->getQuality();
-                $qB = $b->getQuality();
+            $indices = array();
 
-                if ($qA === $qB) {
-                    return $a->getIndex() > $b->getIndex() ? 1 : -1;
-                }
+            foreach ($this->items as $i => $item) {
+                $indices['key'][]     = $i;
+                $indices['quality'][] = $item->getQuality();
+                $indices['index'][]   = $item->getIndex();
+            }
 
-                return $qA > $qB ? -1 : 1;
-            });
+            // indexing by quality (inverse) and index
+            array_multisort(
+                $indices['quality'], SORT_DESC, SORT_NUMERIC,
+                $indices['index'],   SORT_ASC,  SORT_NUMERIC,
+                $indices['key'],     SORT_ASC,  SORT_REGULAR
+            );
+
+            $items = array();
+
+            foreach ($indices['key'] as $key) {
+                $items[$key] = $this->items[$key];
+            }
+
+            $this->items = $items;
 
             $this->sorted = true;
         }
